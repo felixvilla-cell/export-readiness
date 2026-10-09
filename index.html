@@ -124,7 +124,7 @@
     <h2 id="q-title"></h2>
     <p class="q-sub" id="q-sub"></p>
     <div class="options" id="q-options"></div>
-    <div class="writein" id="q-writein"><label for="q-writein-input" id="q-writein-label"></label><input id="q-writein-input" maxlength="200"></div>
+    <div id="q-writeins"></div>
     <div class="q-err" id="q-err" role="alert"></div>
     <div class="nav-row split"><button class="btn-ghost" id="back">Back</button><button class="btn" id="next" style="display:none">Next</button></div>
   </section>
@@ -187,14 +187,16 @@
      options: [["yes", "Yes"], ["no", "Not yet"]]},
     {key: "channels", multi: true, title: "How do you reach U.S. retailers today?", sub: "Select all that apply.",
      options: [["kehe", "KeHE"], ["unfi", "UNFI"], ["other_dist", "Another distributor"], ["direct", "Direct to retailers"]],
-     writeIn: {id: "other_dist_name", label: "Which distributor?", placeholder: "Distributor name",
-               show: function (v) { return v && v.indexOf("other_dist") >= 0; }, missing: "Please tell us which distributor."}},
+     writeIns: [{id: "other_dist_name", label: "Which distributor?", placeholder: "Distributor name", trigger: "other_dist",
+                 show: function (v) { return !!(v && v.indexOf("other_dist") >= 0); }, missing: "Please tell us which distributor."},
+                {id: "direct_retailers", label: "Which retailers do you sell to directly?", placeholder: "e.g. Whole Foods, H-E-B", trigger: "direct",
+                 show: function (v) { return !!(v && v.indexOf("direct") >= 0); }, missing: "Please tell us which retailers."}]},
     {key: "us_sales", title: "What are your annual U.S. retail sales?", sub: "Your best estimate is fine.",
      options: [["lt100", "Under $100,000"], ["100_500", "$100,000 to $500,000"], ["500_1m", "$500,000 to $1 million"], ["1m_plus", "$1 million+"]]},
     {key: "intl_sales", title: "Do you sell outside the U.S. today?", sub: "Annual international sales, any market.",
      options: [["none", "Not yet"], ["lt100", "Yes, under $100,000 a year"], ["100_plus", "Yes, $100,000+ a year"]],
-     writeIn: {id: "countries", label: "Which countries?", placeholder: "e.g. Canada, Jamaica, Mexico",
-               show: function (v) { return v && v !== "none"; }, missing: "Please list the countries you sell to."}},
+     writeIns: [{id: "countries", label: "Which countries?", placeholder: "e.g. Canada, Jamaica, Mexico",
+                 show: function (v) { return !!(v && v !== "none"); }, missing: "Please list the countries you sell to."}]},
     {key: "shelf_life", title: "What's the shelf life of your core items?", sub: "From production date, unopened.",
      options: [["lt6", "Under 6 months"], ["6_9", "6 to 9 months"], ["9_12", "9 to 12 months"], ["12_plus", "12 months or more"]]},
     {key: "trade_budget", title: "Do you have budget set aside for retail promotions?", sub: "Slotting, promotions, trade shows, demos.",
@@ -229,17 +231,25 @@
   }
 
   // Next shows on multi-select questions and whenever a write-in box is open.
-  function syncControls(focus) {
-    var q = QUESTIONS[idx], w = q.writeIn, open = !!(w && w.show(answers[q.key]));
-    $("q-writein").classList.toggle("on", open);
-    if (open) {
-      $("q-writein-label").textContent = w.label;
-      var inp = $("q-writein-input");
-      inp.placeholder = w.placeholder;
-      inp.value = details[w.id] || "";
-      if (focus) setTimeout(function () { inp.focus(); }, 60);
-    }
-    $("next").style.display = (q.multi || open) ? "block" : "none";
+  function openWriteIns(q) {
+    return (q.writeIns || []).filter(function (w) { return w.show(answers[q.key]); });
+  }
+
+  function syncControls(focusId) {
+    var q = QUESTIONS[idx], wrap = $("q-writeins"), open = openWriteIns(q);
+    wrap.innerHTML = "";
+    open.forEach(function (w) {
+      var div = document.createElement("div");
+      div.className = "writein on";
+      var lab = document.createElement("label"), inp = document.createElement("input");
+      lab.textContent = w.label; lab.htmlFor = "wi-" + w.id;
+      inp.id = "wi-" + w.id; inp.maxLength = 200; inp.placeholder = w.placeholder; inp.value = details[w.id] || "";
+      inp.addEventListener("input", function () { details[w.id] = inp.value; $("q-err").textContent = ""; });
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("next").click(); } });
+      div.appendChild(lab); div.appendChild(inp); wrap.appendChild(div);
+      if (focusId === w.trigger || (focusId === true)) setTimeout(function () { inp.focus(); }, 60);
+    });
+    $("next").style.display = (q.multi || open.length) ? "block" : "none";
     $("q-err").textContent = "";
     reportHeight();
   }
@@ -266,7 +276,7 @@
       box.appendChild(b);
     });
     show("s-question");
-    syncControls(false);
+    syncControls(null);
   }
 
   var advancing = false;
@@ -278,15 +288,15 @@
       answers[q.key] = cur;
       btn.classList.toggle("selected", at < 0);
       btn.setAttribute("aria-checked", at < 0 ? "true" : "false");
-      syncControls(value === "other_dist" && at < 0);
+      syncControls(at < 0 ? value : null);
       return;
     }
     answers[q.key] = value;
     var all = $("q-options").children;
     for (var i = 0; i < all.length; i++) { all[i].classList.remove("selected"); all[i].setAttribute("aria-checked", "false"); }
     btn.classList.add("selected"); btn.setAttribute("aria-checked", "true");
-    if (q.writeIn && q.writeIn.show(value)) { syncControls(true); return; }
-    syncControls(false);
+    if (openWriteIns(q).length) { syncControls(true); return; }
+    syncControls(null);
     advancing = true;
     setTimeout(function () {
       advancing = false;
@@ -299,19 +309,11 @@
     if (idx < QUESTIONS.length - 1) { idx++; renderQuestion(); } else { score(); }
   }
 
-  $("q-writein-input").addEventListener("input", function () {
-    var w = QUESTIONS[idx].writeIn;
-    if (w) details[w.id] = this.value;
-    $("q-err").textContent = "";
-  });
-  $("q-writein-input").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("next").click(); } });
-
   $("next").addEventListener("click", function () {
     var q = QUESTIONS[idx], v = answers[q.key];
     if (q.multi && !(v && v.length)) { $("q-err").textContent = "Pick at least one."; reportHeight(); return; }
-    if (q.writeIn && q.writeIn.show(v) && !(details[q.writeIn.id] || "").trim()) {
-      $("q-err").textContent = q.writeIn.missing; reportHeight(); return;
-    }
+    var miss = openWriteIns(q).filter(function (w) { return !(details[w.id] || "").trim(); })[0];
+    if (miss) { $("q-err").textContent = miss.missing; reportHeight(); return; }
     advance();
   });
 
@@ -325,7 +327,7 @@
   function payloadDetails() {
     var d = {};
     QUESTIONS.forEach(function (q) {
-      if (q.writeIn && q.writeIn.show(answers[q.key])) d[q.writeIn.id] = (details[q.writeIn.id] || "").trim();
+      openWriteIns(q).forEach(function (w) { d[w.id] = (details[w.id] || "").trim(); });
     });
     return d;
   }
