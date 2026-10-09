@@ -302,6 +302,7 @@
   $("q-writein-input").addEventListener("input", function () {
     var w = QUESTIONS[idx].writeIn;
     if (w) details[w.id] = this.value;
+    $("q-err").textContent = "";
   });
   $("q-writein-input").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("next").click(); } });
 
