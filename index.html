@@ -51,6 +51,19 @@
   .radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none;}
   .option.selected .radio{border-color:var(--forest);background:var(--forest);box-shadow:inset 0 0 0 3px var(--soft);}
   .nav-row{margin-top:24px;}
+  .nav-row.split{display:flex;gap:10px;}
+  .nav-row.split .btn{flex:2;padding:13px 18px;font-size:15px;}
+  .nav-row.split .btn-ghost{flex:1;}
+  .box{width:20px;height:20px;border-radius:6px;border:2px solid var(--line);flex:none;}
+  .option.selected .box{border-color:var(--forest);background:var(--forest);
+     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+     background-size:14px;background-position:center;background-repeat:no-repeat;}
+  .writein{margin-top:16px;display:none;}
+  .writein.on{display:block;animation:fade .2s ease;}
+  .writein label{font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;}
+  .writein input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:12px;font-size:16px;color:var(--ink);background:#fff;font-family:inherit;}
+  .writein input:focus{outline:none;border-color:var(--forest);}
+  .q-err{color:var(--err);font-size:13.5px;margin-top:10px;min-height:1px;}
 
   .loading{align-items:center;justify-content:center;text-align:center;gap:16px;padding:60px 0;}
   .spinner{width:36px;height:36px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--forest);animation:spin .8s linear infinite;}
@@ -110,8 +123,10 @@
     <div class="progress-bar"><div class="progress-fill" id="q-fill"></div></div>
     <h2 id="q-title"></h2>
     <p class="q-sub" id="q-sub"></p>
-    <div class="options" id="q-options" role="radiogroup"></div>
-    <div class="nav-row"><button class="btn-ghost" id="back">Back</button></div>
+    <div class="options" id="q-options"></div>
+    <div class="writein" id="q-writein"><label for="q-writein-input" id="q-writein-label"></label><input id="q-writein-input" maxlength="200"></div>
+    <div class="q-err" id="q-err" role="alert"></div>
+    <div class="nav-row split"><button class="btn-ghost" id="back">Back</button><button class="btn" id="next" style="display:none">Next</button></div>
   </section>
 
   <!-- Loading -->
@@ -170,12 +185,16 @@
   var QUESTIONS = [
     {key: "us_retail", title: "Is your product on U.S. retail shelves today?", sub: "Grocery, natural, specialty or convenience stores.",
      options: [["yes", "Yes"], ["no", "Not yet"]]},
-    {key: "channel", title: "How do you reach U.S. retailers today?", sub: "Pick the main way your product gets to stores.",
-     options: [["kehe", "Through KeHE"], ["other_dist", "Through UNFI or another distributor"], ["direct", "Direct to retailers"]]},
+    {key: "channels", multi: true, title: "How do you reach U.S. retailers today?", sub: "Select all that apply.",
+     options: [["kehe", "KeHE"], ["unfi", "UNFI"], ["other_dist", "Another distributor"], ["direct", "Direct to retailers"]],
+     writeIn: {id: "other_dist_name", label: "Which distributor?", placeholder: "Distributor name",
+               show: function (v) { return v && v.indexOf("other_dist") >= 0; }, missing: "Please tell us which distributor."}},
     {key: "us_sales", title: "What are your annual U.S. retail sales?", sub: "Your best estimate is fine.",
      options: [["lt100", "Under $100,000"], ["100_500", "$100,000 to $500,000"], ["500_1m", "$500,000 to $1 million"], ["1m_plus", "$1 million+"]]},
     {key: "intl_sales", title: "Do you sell outside the U.S. today?", sub: "Annual international sales, any market.",
-     options: [["none", "Not yet"], ["lt100", "Yes, under $100,000 a year"], ["100_plus", "Yes, $100,000+ a year"]]},
+     options: [["none", "Not yet"], ["lt100", "Yes, under $100,000 a year"], ["100_plus", "Yes, $100,000+ a year"]],
+     writeIn: {id: "countries", label: "Which countries?", placeholder: "e.g. Canada, Jamaica, Mexico",
+               show: function (v) { return v && v !== "none"; }, missing: "Please list the countries you sell to."}},
     {key: "shelf_life", title: "What's the shelf life of your core items?", sub: "From production date, unopened.",
      options: [["lt6", "Under 6 months"], ["6_9", "6 to 9 months"], ["9_12", "9 to 12 months"], ["12_plus", "12 months or more"]]},
     {key: "trade_budget", title: "Do you have budget set aside for retail promotions?", sub: "Slotting, promotions, trade shows, demos.",
@@ -185,12 +204,12 @@
   ];
 
   var $ = function (id) { return document.getElementById(id); };
-  var answers = {}, idx = 0, startedAt = 0, lastScore = null;
+  var answers = {}, details = {}, idx = 0, startedAt = 0, lastScore = null;
 
   function show(id) {
     var s = document.querySelectorAll(".screen");
     for (var i = 0; i < s.length; i++) s[i].classList.toggle("on", s[i].id === id);
-    if (window.parent !== window) { try { window.scrollTo(0, 0); } catch (e) {} } else { window.scrollTo(0, 0); }
+    window.scrollTo(0, 0);
     reportHeight();
   }
 
@@ -204,6 +223,27 @@
   if (window.parent !== window) document.body.classList.add("embedded");
   window.addEventListener("resize", reportHeight);
 
+  function isSelected(q, val) {
+    var a = answers[q.key];
+    return q.multi ? !!(a && a.indexOf(val) >= 0) : a === val;
+  }
+
+  // Next shows on multi-select questions and whenever a write-in box is open.
+  function syncControls(focus) {
+    var q = QUESTIONS[idx], w = q.writeIn, open = !!(w && w.show(answers[q.key]));
+    $("q-writein").classList.toggle("on", open);
+    if (open) {
+      $("q-writein-label").textContent = w.label;
+      var inp = $("q-writein-input");
+      inp.placeholder = w.placeholder;
+      inp.value = details[w.id] || "";
+      if (focus) setTimeout(function () { inp.focus(); }, 60);
+    }
+    $("next").style.display = (q.multi || open) ? "block" : "none";
+    $("q-err").textContent = "";
+    reportHeight();
+  }
+
   function renderQuestion() {
     var q = QUESTIONS[idx];
     $("q-count").textContent = "Question " + (idx + 1) + " of " + QUESTIONS.length;
@@ -212,40 +252,81 @@
     $("q-sub").textContent = q.sub;
     var box = $("q-options");
     box.innerHTML = "";
+    box.setAttribute("role", q.multi ? "group" : "radiogroup");
     q.options.forEach(function (o) {
       var b = document.createElement("button");
       b.type = "button";
-      b.className = "option" + (answers[q.key] === o[0] ? " selected" : "");
-      b.setAttribute("role", "radio");
-      b.setAttribute("aria-checked", answers[q.key] === o[0] ? "true" : "false");
-      b.innerHTML = "<span></span><span class='radio'></span>";
+      var on = isSelected(q, o[0]);
+      b.className = "option" + (on ? " selected" : "");
+      b.setAttribute("role", q.multi ? "checkbox" : "radio");
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.innerHTML = "<span></span><span class='" + (q.multi ? "box" : "radio") + "'></span>";
       b.firstChild.textContent = o[1];
-      b.addEventListener("click", function () { choose(q.key, o[0], b); });
+      b.addEventListener("click", function () { choose(q, o[0], b); });
       box.appendChild(b);
     });
     show("s-question");
+    syncControls(false);
   }
 
   var advancing = false;
-  function choose(key, value, btn) {
+  function choose(q, value, btn) {
     if (advancing) return;
-    advancing = true;
-    answers[key] = value;
+    if (q.multi) {
+      var cur = (answers[q.key] || []).slice(), at = cur.indexOf(value);
+      if (at >= 0) cur.splice(at, 1); else cur.push(value);
+      answers[q.key] = cur;
+      btn.classList.toggle("selected", at < 0);
+      btn.setAttribute("aria-checked", at < 0 ? "true" : "false");
+      syncControls(value === "other_dist" && at < 0);
+      return;
+    }
+    answers[q.key] = value;
     var all = $("q-options").children;
     for (var i = 0; i < all.length; i++) { all[i].classList.remove("selected"); all[i].setAttribute("aria-checked", "false"); }
     btn.classList.add("selected"); btn.setAttribute("aria-checked", "true");
+    if (q.writeIn && q.writeIn.show(value)) { syncControls(true); return; }
+    syncControls(false);
+    advancing = true;
     setTimeout(function () {
       advancing = false;
-      if (key === "us_retail" && value === "no") return score();
-      if (idx < QUESTIONS.length - 1) { idx++; renderQuestion(); } else { score(); }
+      if (q.key === "us_retail" && value === "no") return score();
+      advance();
     }, 260);
   }
+
+  function advance() {
+    if (idx < QUESTIONS.length - 1) { idx++; renderQuestion(); } else { score(); }
+  }
+
+  $("q-writein-input").addEventListener("input", function () {
+    var w = QUESTIONS[idx].writeIn;
+    if (w) details[w.id] = this.value;
+  });
+  $("q-writein-input").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("next").click(); } });
+
+  $("next").addEventListener("click", function () {
+    var q = QUESTIONS[idx], v = answers[q.key];
+    if (q.multi && !(v && v.length)) { $("q-err").textContent = "Pick at least one."; reportHeight(); return; }
+    if (q.writeIn && q.writeIn.show(v) && !(details[q.writeIn.id] || "").trim()) {
+      $("q-err").textContent = q.writeIn.missing; reportHeight(); return;
+    }
+    advance();
+  });
 
   function payloadAnswers() {
     if (answers.us_retail === "no") return {us_retail: "no"};
     var a = {};
     QUESTIONS.forEach(function (q) { a[q.key] = answers[q.key]; });
     return a;
+  }
+
+  function payloadDetails() {
+    var d = {};
+    QUESTIONS.forEach(function (q) {
+      if (q.writeIn && q.writeIn.show(answers[q.key])) d[q.writeIn.id] = (details[q.writeIn.id] || "").trim();
+    });
+    return d;
   }
 
   function post(path, body) {
@@ -302,7 +383,7 @@
     $("f-err").textContent = "";
     var btn = $("f-submit");
     btn.disabled = true; btn.textContent = "Sending...";
-    post("/lead", {answers: payloadAnswers(), contact: c, hp: $("f-hp").value, elapsed_ms: Date.now() - startedAt})
+    post("/lead", {answers: payloadAnswers(), details: payloadDetails(), contact: c, hp: $("f-hp").value, elapsed_ms: Date.now() - startedAt})
       .then(function () {
         $("t-title").textContent = "Thank you, " + c.name.split(" ")[0];
         show("s-thanks");
@@ -312,7 +393,7 @@
   });
 
   function restart() {
-    answers = {}; idx = 0; startedAt = Date.now();
+    answers = {}; details = {}; idx = 0; startedAt = Date.now();
     ["f-name", "f-company", "f-email", "f-phone", "f-website", "f-product"].forEach(function (id) { $(id).value = ""; });
     renderQuestion();
   }
@@ -321,7 +402,7 @@
   $("back").addEventListener("click", function () { if (idx === 0) { show("s-landing"); } else { idx--; renderQuestion(); } });
   $("retry").addEventListener("click", score);
   $("retake").addEventListener("click", restart);
-  $("again").addEventListener("click", function () { answers = {}; idx = 0; show("s-landing"); });
+  $("again").addEventListener("click", function () { answers = {}; details = {}; idx = 0; show("s-landing"); });
   reportHeight();
 })();
 </script>
