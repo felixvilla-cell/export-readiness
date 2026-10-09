@@ -226,7 +226,9 @@
   function reportHeight() {
     if (window.parent === window) return;
     setTimeout(function () {
-      window.parent.postMessage({type: "gbed-export-quiz-height", height: document.documentElement.scrollHeight}, "*");
+      // Measure the content, not the document: inside an iframe scrollHeight never drops below the frame's own height.
+      var h = Math.ceil(document.querySelector(".wrap").getBoundingClientRect().height);
+      window.parent.postMessage({type: "gbed-export-quiz-height", height: h}, "*");
     }, 30);
   }
   if (window.parent !== window) document.body.classList.add("embedded");
