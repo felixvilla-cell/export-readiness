@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Export Readiness Assessment | Global Brand and Export Development</title>
+<meta name="description" content="Is your brand ready to export? Answer 7 quick questions and get an instant readiness read from our trade team.">
+<style>
+  :root{
+    --ink:#1b2d24; --forest:#1f4d3a; --forest-dark:#153627; --gold:#c99a3c;
+    --paper:#faf8f3; --line:#e4ded0; --muted:#6b7266; --soft:#eef3ee; --err:#a3352b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--paper);}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:var(--ink);
+       -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:460px;margin:0 auto;padding:28px 22px 32px;min-height:100vh;display:flex;flex-direction:column;}
+  body.embedded .wrap{min-height:0;}
+  .brand{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:26px;}
+  .screen{display:none;flex-direction:column;flex:1;}
+  .screen.on{display:flex;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .hero-icon{width:56px;height:56px;border-radius:14px;background:var(--forest);display:flex;align-items:center;justify-content:center;margin-bottom:22px;}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;margin-bottom:12px;}
+  h1{font-size:28px;line-height:1.22;margin:0 0 14px;font-weight:700;}
+  h2{font-size:22px;line-height:1.3;margin:0 0 8px;font-weight:700;}
+  .sub{font-size:15.5px;line-height:1.55;color:var(--muted);margin:0 0 28px;}
+  .q-sub{font-size:14px;color:var(--muted);margin:0 0 22px;line-height:1.45;}
+
+  button{font:inherit;cursor:pointer;}
+  .btn{background:var(--forest);color:#fff;border:none;border-radius:12px;padding:16px 20px;font-size:16px;font-weight:600;width:100%;transition:background .15s;}
+  .btn:hover{background:var(--forest-dark);}
+  .btn:disabled{opacity:.6;cursor:default;}
+  .btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink);border-radius:12px;padding:13px 18px;font-size:15px;font-weight:600;}
+  .link{background:none;border:none;color:var(--muted);font-size:14px;text-decoration:underline;padding:8px;}
+  .hint{font-size:12.5px;color:var(--muted);text-align:center;margin-top:10px;}
+
+  .trust{margin-top:auto;padding-top:26px;display:flex;flex-direction:column;gap:9px;}
+  .trust-row{display:flex;align-items:center;gap:10px;font-size:13.5px;}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex:none;}
+
+  .progress-label{font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;}
+  .progress-bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:28px;}
+  .progress-fill{height:100%;background:var(--gold);border-radius:3px;transition:width .3s ease;}
+  .options{display:flex;flex-direction:column;gap:11px;}
+  .option{text-align:left;border:1.5px solid var(--line);border-radius:12px;padding:16px;font-size:15.5px;color:var(--ink);
+          background:#fff;font-weight:500;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:border-color .15s,background .15s;}
+  .option:hover{border-color:#b9c7b9;}
+  .option.selected{border-color:var(--forest);background:var(--soft);font-weight:700;}
+  .radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none;}
+  .option.selected .radio{border-color:var(--forest);background:var(--forest);box-shadow:inset 0 0 0 3px var(--soft);}
+  .nav-row{margin-top:24px;}
+
+  .loading{align-items:center;justify-content:center;text-align:center;gap:16px;padding:60px 0;}
+  .spinner{width:36px;height:36px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--forest);animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .badge{align-self:flex-start;background:var(--soft);color:var(--forest);font-size:12px;font-weight:700;padding:6px 12px;border-radius:20px;margin-bottom:18px;letter-spacing:.03em;}
+  .badge.warm{background:#f6eedd;color:#8a6420;}
+  .score-ring{width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+  .score-inner{width:72px;height:72px;border-radius:50%;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .score-num{font-size:22px;font-weight:800;line-height:1;}
+  .score-den{font-size:10px;color:var(--muted);}
+  .result-copy{font-size:15px;line-height:1.6;margin:6px 0 18px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;}
+  .tips{margin:0 0 22px;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .tips li{font-size:14px;line-height:1.45;display:flex;gap:10px;}
+  .tips li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold);flex:none;margin-top:7px;}
+  .tips-title{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;}
+
+  .form-card{border-top:1px solid var(--line);padding-top:22px;}
+  .form-card h3{font-size:18px;margin:0 0 6px;}
+  .form-card p{font-size:14px;color:var(--muted);margin:0 0 18px;line-height:1.45;}
+  .field{margin-bottom:13px;}
+  .field label{font-size:12.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px;}
+  .field label .opt{font-weight:400;}
+  .field input,.field textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:12px;font-size:16px;color:var(--ink);background:#fff;font-family:inherit;}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--forest);}
+  .field textarea{resize:vertical;min-height:70px;}
+  .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;}
+  .err{color:var(--err);font-size:13.5px;margin:4px 0 12px;min-height:1px;}
+  .fine{font-size:11.5px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.45;}
+  .center{text-align:center;align-items:center;}
+  .check{width:60px;height:60px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;margin:30px auto 20px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Global Brand and Export Development</div>
+
+  <!-- Landing -->
+  <section class="screen on" id="s-landing">
+    <div class="hero-icon" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c3 3 4 6.5 4 10s-1 7-4 10c-3-3-4-6.5-4-10s1-7 4-10z"/></svg>
+    </div>
+    <div class="eyebrow">Free Export Assessment</div>
+    <h1>Is your brand ready to export?</h1>
+    <p class="sub">Answer 7 quick questions and get an instant readiness read from our trade team, plus what it would take to get you there.</p>
+    <button class="btn" id="start">Start the assessment</button>
+    <div class="hint">Takes about 2 minutes</div>
+    <div class="trust">
+      <div class="trust-row"><span class="dot"></span>Shipping specialty brands to 60+ countries</div>
+      <div class="trust-row"><span class="dot"></span>Minority-owned and B Corp certified</div>
+    </div>
+  </section>
+
+  <!-- Question -->
+  <section class="screen" id="s-question">
+    <div class="progress-label" id="q-count"></div>
+    <div class="progress-bar"><div class="progress-fill" id="q-fill"></div></div>
+    <h2 id="q-title"></h2>
+    <p class="q-sub" id="q-sub"></p>
+    <div class="options" id="q-options" role="radiogroup"></div>
+    <div class="nav-row"><button class="btn-ghost" id="back">Back</button></div>
+  </section>
+
+  <!-- Loading -->
+  <section class="screen loading" id="s-loading">
+    <div class="spinner" aria-hidden="true"></div>
+    <div style="font-size:15px;color:var(--muted)">Scoring your answers...</div>
+  </section>
+
+  <!-- Error -->
+  <section class="screen center" id="s-error">
+    <h2 style="margin-top:40px">We couldn't score that right now</h2>
+    <p class="q-sub" id="err-msg">Please try again in a minute.</p>
+    <button class="btn" id="retry">Try again</button>
+  </section>
+
+  <!-- Result -->
+  <section class="screen" id="s-result">
+    <div class="badge" id="r-badge"></div>
+    <div class="score-ring" id="r-ring"><div class="score-inner"><span class="score-num" id="r-score"></span><span class="score-den">/100</span></div></div>
+    <h2 id="r-title"></h2>
+    <p class="result-copy" id="r-copy"></p>
+    <div id="r-tips-wrap"><div class="tips-title">Worth knowing</div><ul class="tips" id="r-tips"></ul></div>
+
+    <form class="form-card" id="lead-form" novalidate>
+      <h3>Talk to our team</h3>
+      <p>Send us your details and someone from our team will be in touch about your brand.</p>
+      <div class="field"><label for="f-name">Full name</label><input id="f-name" autocomplete="name" required></div>
+      <div class="field"><label for="f-company">Company / brand</label><input id="f-company" autocomplete="organization" required></div>
+      <div class="field"><label for="f-email">Email</label><input id="f-email" type="email" autocomplete="email" required></div>
+      <div class="field"><label for="f-phone">Phone <span class="opt">(optional)</span></label><input id="f-phone" type="tel" autocomplete="tel"></div>
+      <div class="field"><label for="f-website">Website <span class="opt">(optional)</span></label><input id="f-website" type="url" inputmode="url" placeholder="yourbrand.com"></div>
+      <div class="field"><label for="f-product">What do you make? <span class="opt">(optional)</span></label><textarea id="f-product" maxlength="600" placeholder="e.g. plantain chips, 4 flavors, in 300 stores"></textarea></div>
+      <div class="hp" aria-hidden="true"><label>Leave blank<input id="f-hp" tabindex="-1" autocomplete="off"></label></div>
+      <div class="err" id="f-err" role="alert"></div>
+      <button class="btn" type="submit" id="f-submit">Send to our team</button>
+      <p class="fine">We only use your details to follow up about your brand. No obligation.</p>
+    </form>
+    <div class="nav-row center" id="r-retake-wrap" style="display:none"><button class="btn-ghost" id="retake">Retake the assessment</button></div>
+  </section>
+
+  <!-- Thanks -->
+  <section class="screen center" id="s-thanks">
+    <div class="check" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1f4d3a" stroke-width="2.5"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <h2 id="t-title">Thank you</h2>
+    <p class="q-sub">Your answers are with our team, and we'll be in touch about your brand.</p>
+    <button class="link" id="again">Back to start</button>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  // Backend (Alfred export-quiz server behind Tailscale Funnel).
+  var API_BASE = "https://felixs-macbook-pro-1.taildbcee3.ts.net/export-quiz";
+
+  var QUESTIONS = [
+    {key: "us_retail", title: "Is your product on U.S. retail shelves today?", sub: "Grocery, natural, specialty or convenience stores.",
+     options: [["yes", "Yes"], ["no", "Not yet"]]},
+    {key: "channel", title: "How do you reach U.S. retailers today?", sub: "Pick the main way your product gets to stores.",
+     options: [["kehe", "Through KeHE"], ["other_dist", "Through UNFI or another distributor"], ["direct", "Direct to retailers"]]},
+    {key: "us_sales", title: "What are your annual U.S. retail sales?", sub: "Your best estimate is fine.",
+     options: [["lt100", "Under $100,000"], ["100_500", "$100,000 to $500,000"], ["500_1m", "$500,000 to $1 million"], ["1m_plus", "$1 million+"]]},
+    {key: "intl_sales", title: "Do you sell outside the U.S. today?", sub: "Annual international sales, any market.",
+     options: [["none", "Not yet"], ["lt100", "Yes, under $100,000 a year"], ["100_plus", "Yes, $100,000+ a year"]]},
+    {key: "shelf_life", title: "What's the shelf life of your core items?", sub: "From production date, unopened.",
+     options: [["lt6", "Under 6 months"], ["6_9", "6 to 9 months"], ["9_12", "9 to 12 months"], ["12_plus", "12 months or more"]]},
+    {key: "trade_budget", title: "Do you have budget set aside for retail promotions?", sub: "Slotting, promotions, trade shows, demos.",
+     options: [["yes", "Yes, it's budgeted"], ["some", "Some, but nothing formal"], ["no", "Not right now"]]},
+    {key: "decider", title: "Who would decide on working with a broker?", sub: "The person who would sign off.",
+     options: [["owner", "Owner or founder"], ["exec", "A partner or senior executive"], ["inhouse", "Our sales or international manager"]]}
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var answers = {}, idx = 0, startedAt = 0, lastScore = null;
+
+  function show(id) {
+    var s = document.querySelectorAll(".screen");
+    for (var i = 0; i < s.length; i++) s[i].classList.toggle("on", s[i].id === id);
+    if (window.parent !== window) { try { window.scrollTo(0, 0); } catch (e) {} } else { window.scrollTo(0, 0); }
+    reportHeight();
+  }
+
+  // Lets a host page auto-size the iframe.
+  function reportHeight() {
+    if (window.parent === window) return;
+    setTimeout(function () {
+      window.parent.postMessage({type: "gbed-export-quiz-height", height: document.documentElement.scrollHeight}, "*");
+    }, 30);
+  }
+  if (window.parent !== window) document.body.classList.add("embedded");
+  window.addEventListener("resize", reportHeight);
+
+  function renderQuestion() {
+    var q = QUESTIONS[idx];
+    $("q-count").textContent = "Question " + (idx + 1) + " of " + QUESTIONS.length;
+    $("q-fill").style.width = Math.round((idx / QUESTIONS.length) * 100) + "%";
+    $("q-title").textContent = q.title;
+    $("q-sub").textContent = q.sub;
+    var box = $("q-options");
+    box.innerHTML = "";
+    q.options.forEach(function (o) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "option" + (answers[q.key] === o[0] ? " selected" : "");
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", answers[q.key] === o[0] ? "true" : "false");
+      b.innerHTML = "<span></span><span class='radio'></span>";
+      b.firstChild.textContent = o[1];
+      b.addEventListener("click", function () { choose(q.key, o[0], b); });
+      box.appendChild(b);
+    });
+    show("s-question");
+  }
+
+  var advancing = false;
+  function choose(key, value, btn) {
+    if (advancing) return;
+    advancing = true;
+    answers[key] = value;
+    var all = $("q-options").children;
+    for (var i = 0; i < all.length; i++) { all[i].classList.remove("selected"); all[i].setAttribute("aria-checked", "false"); }
+    btn.classList.add("selected"); btn.setAttribute("aria-checked", "true");
+    setTimeout(function () {
+      advancing = false;
+      if (key === "us_retail" && value === "no") return score();
+      if (idx < QUESTIONS.length - 1) { idx++; renderQuestion(); } else { score(); }
+    }, 260);
+  }
+
+  function payloadAnswers() {
+    if (answers.us_retail === "no") return {us_retail: "no"};
+    var a = {};
+    QUESTIONS.forEach(function (q) { a[q.key] = answers[q.key]; });
+    return a;
+  }
+
+  function post(path, body) {
+    return fetch(API_BASE + path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)})
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (!r.ok) throw new Error(j.error || "Something went wrong. Please try again.");
+          return j;
+        });
+      });
+  }
+
+  function score() {
+    show("s-loading");
+    post("/score", {answers: payloadAnswers()}).then(renderResult).catch(function (e) {
+      $("err-msg").textContent = e.message && e.message.indexOf("Too many") === 0 ? e.message : "Please check your connection and try again in a minute.";
+      show("s-error");
+    });
+  }
+
+  function renderResult(r) {
+    lastScore = r;
+    var badge = $("r-badge");
+    badge.textContent = r.badge;
+    badge.className = "badge" + (r.outcome === "export" ? "" : " warm");
+    if (r.score === null || r.score === undefined) {
+      $("r-ring").style.display = "none";
+    } else {
+      $("r-ring").style.display = "flex";
+      $("r-score").textContent = r.score;
+      var col = r.outcome === "export" ? "var(--forest)" : "var(--gold)";
+      $("r-ring").style.background = "conic-gradient(" + col + " 0% " + r.score + "%, var(--line) " + r.score + "% 100%)";
+    }
+    $("r-title").textContent = r.title;
+    $("r-copy").textContent = r.copy;
+    var tips = $("r-tips");
+    tips.innerHTML = "";
+    (r.tips || []).forEach(function (t) { var li = document.createElement("li"); li.textContent = t; tips.appendChild(li); });
+    $("r-tips-wrap").style.display = (r.tips && r.tips.length) ? "block" : "none";
+    $("lead-form").style.display = r.show_form ? "block" : "none";
+    $("r-retake-wrap").style.display = r.show_form ? "none" : "flex";
+    $("f-err").textContent = "";
+    show("s-result");
+  }
+
+  $("lead-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var c = {
+      name: $("f-name").value.trim(), company: $("f-company").value.trim(), email: $("f-email").value.trim(),
+      phone: $("f-phone").value.trim(), website: $("f-website").value.trim(), product: $("f-product").value.trim()
+    };
+    if (!c.name || !c.company) { $("f-err").textContent = "Please add your name and company."; reportHeight(); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(c.email)) { $("f-err").textContent = "Please enter a valid email."; reportHeight(); return; }
+    $("f-err").textContent = "";
+    var btn = $("f-submit");
+    btn.disabled = true; btn.textContent = "Sending...";
+    post("/lead", {answers: payloadAnswers(), contact: c, hp: $("f-hp").value, elapsed_ms: Date.now() - startedAt})
+      .then(function () {
+        $("t-title").textContent = "Thank you, " + c.name.split(" ")[0];
+        show("s-thanks");
+      })
+      .catch(function (e) { $("f-err").textContent = e.message; reportHeight(); })
+      .then(function () { btn.disabled = false; btn.textContent = "Send to our team"; });
+  });
+
+  function restart() {
+    answers = {}; idx = 0; startedAt = Date.now();
+    ["f-name", "f-company", "f-email", "f-phone", "f-website", "f-product"].forEach(function (id) { $(id).value = ""; });
+    renderQuestion();
+  }
+
+  $("start").addEventListener("click", function () { startedAt = Date.now(); idx = 0; renderQuestion(); });
+  $("back").addEventListener("click", function () { if (idx === 0) { show("s-landing"); } else { idx--; renderQuestion(); } });
+  $("retry").addEventListener("click", score);
+  $("retake").addEventListener("click", restart);
+  $("again").addEventListener("click", function () { answers = {}; idx = 0; show("s-landing"); });
+  reportHeight();
+})();
+</script>
+</body>
+</html>
